@@ -35,6 +35,6 @@ job:
           key: ${{env.GITLEAKS_VERSION}}-${{runner.os}}
       - name: "Install gitleaks"
         if: steps.cache-gitleaks.outputs.cache-hit != 'true'
-        run: curl -L "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -C ~/.local/bin/ -zvx gitleaks && chmod +x ~/.local/bin/gitleaks 
+        run: curl -L "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -C ~/.local/bin/ -zvx gitleaks && chmod +x ~/.local/bin/gitleaks
       - name: "Execute checks"
         run: pre-commit run -v --from-ref ${github.event.pull_request.head.sha} --to-ref ${github.event.pull_request.base.sha}
