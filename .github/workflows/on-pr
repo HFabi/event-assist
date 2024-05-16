@@ -1,0 +1,40 @@
+name: Pull Request
+
+on:
+  pull_request:
+    branch: ["main"]
+
+env:
+  GITLEAKS_VERSION: 8.18.2
+  PRE_COMMIT_VERSION: 3.7.1
+
+job:
+  check_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Prepare runner"
+        run: mkdir -p ~/.local/bin
+      - name: "Checkout pull request HEAD commit (instead of merge commit)"
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: "Create pre-commit cache"
+        id: cache-pre-commit
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/pre-commit
+          key: ${{env.PRE_COMMIT_VERSION}}-${{runner.os}}
+      - name: "Install pre-commit"
+        if: steps.cache-pre-commit.outputs.cache-hit != 'true'
+        run: curl -L "https://github.com/pre-commit/pre-commit/releases/download/v${PRE_COMMIT_VERSION}/pre-commit-${PRE_COMMIT_VERSION}.pyz" -o ~/.local/bin/pre-commit && chmod +x ~/.local/bin/pre-commit
+      - name: "Create gitleaks cache"
+        id: cache-gitleaks
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/gitleaks
+          key: ${{env.GITLEAKS_VERSION}}-${{runner.os}}
+      - name: "Install gitleaks"
+        if: steps.cache-gitleaks.outputs.cache-hit != 'true'
+        run: curl -L "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -C ~/.local/bin/ -zvx gitleaks && chmod +x ~/.local/bin/gitleaks 
+      - name: "Execute checks"
+        run: pre-commit run -v --from-ref ${github.event.pull_request.head.sha} --to-ref ${github.event.pull_request.base.sha}
